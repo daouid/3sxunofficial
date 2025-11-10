@@ -629,7 +629,7 @@ void GameState_Load(const GameState* src) {
     GS_LOAD(Player_Color);
     GS_LOAD(PP_Priority);
     GS_LOAD(OK_Priority);
-    GS_SAVE(Stock_My_char);
+    GS_LOAD(Stock_My_char);
     GS_LOAD(Stock_Player_Color);
     GS_LOAD(Music_Fade);
     GS_LOAD(Stop_SG);

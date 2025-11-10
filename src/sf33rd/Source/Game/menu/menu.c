@@ -375,10 +375,10 @@ void Mode_Select(struct _TASK* task_ptr) {
         if (g_autostart_netplay) {
             g_autostart_netplay = false;
             Menu_Cursor_Y[0] = 4;
+            PL_id = Netplay_GetPlayer();
+            Decide_PL(PL_id);
             IO_Result = 0x100;
-        }
-
-        if (Connect_Status == 0 && Menu_Cursor_Y[0] == 1) {
+        } else if (Connect_Status == 0 && Menu_Cursor_Y[0] == 1) {
             Menu_Cursor_Y[0] = 2;
         } else {
             PL_id = 0;
