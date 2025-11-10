@@ -470,6 +470,10 @@ void GameState_Save(GameState* dst) {
     dst->Demo_Ptr_Offset[0] = Demo_Ptr[0] - Replay_w.io_unit.key_buff[0];
     dst->Demo_Ptr_Offset[1] = Demo_Ptr[1] - Replay_w.io_unit.key_buff[1];
     GS_SAVE(Replay_w);
+
+    GS_SAVE(omop_vital_ix);
+    GS_SAVE(omop_s_vital);
+    GS_SAVE(sag_inc_timer);
 }
 
 #define GS_LOAD(member) SDL_memcpy(&member, &src->member, sizeof(member))
@@ -935,4 +939,8 @@ void GameState_Load(const GameState* src) {
     GS_LOAD(Replay_w);
     Demo_Ptr[0] = Replay_w.io_unit.key_buff[0] + src->Demo_Ptr_Offset[0];
     Demo_Ptr[1] = Replay_w.io_unit.key_buff[1] + src->Demo_Ptr_Offset[1];
+
+    GS_LOAD(omop_vital_ix);
+    GS_LOAD(omop_s_vital);
+    GS_LOAD(sag_inc_timer);
 }

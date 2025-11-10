@@ -472,6 +472,13 @@ typedef struct GameState {
     // Replay state
     ptrdiff_t Demo_Ptr_Offset[2];
     _REPLAY_W Replay_w;
+
+    // omop/vital
+    s16 omop_vital_ix[2];
+    s16 omop_s_vital[2];
+
+    // spgauge
+    s16 sag_inc_timer[2];
 } GameState;
 
 void GameState_Save(GameState* dst);
