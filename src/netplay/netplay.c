@@ -42,7 +42,7 @@ typedef struct EffectState {
     s16 head_ix[8];
     s16 tail_ix[8];
     s16 exec_tm[8];
-    uintptr_t frw[EFFECT_MAX][448];
+    WORK frw[EFFECT_MAX];
     s16 frwque[EFFECT_MAX];
 } EffectState;
 
@@ -242,10 +242,10 @@ static void clean_state_pointers(State* state) {
     }
 
     for (int i = 0; i < EFFECT_MAX; i++) {
-        WORK* work = (WORK*)state->es.frw[i];
+        WORK* work = &state->es.frw[i];
         clean_work_pointers(work);
 
-        WORK_Other* work_big = (WORK_Other*)state->es.frw[i];
+        WORK_Other* work_big = (WORK_Other*)&state->es.frw[i];
         work_big->my_master = NULL;
     }
 }
@@ -287,7 +287,9 @@ static void save_state(GekkoGameEvent* event) {
 
     // EffectState
     EffectState* es = &dst->es;
-    SDL_copya(es->frw, frw);
+    for (int i = 0; i < EFFECT_MAX; i++) {
+        SDL_memcpy(&es->frw[i], (void*)frw[i], sizeof(WORK));
+    }
     SDL_copya(es->exec_tm, exec_tm);
     SDL_copya(es->frwque, frwque);
     SDL_copya(es->head_ix, head_ix);
@@ -311,7 +313,9 @@ static void load_state(GekkoGameEvent* event) {
 
     // EffectState
     const EffectState* es = &src->es;
-    SDL_copya(frw, es->frw);
+    for (int i = 0; i < EFFECT_MAX; i++) {
+        SDL_memcpy((void*)frw[i], &es->frw[i], sizeof(WORK));
+    }
     SDL_copya(exec_tm, es->exec_tm);
     SDL_copya(frwque, es->frwque);
     SDL_copya(head_ix, es->head_ix);

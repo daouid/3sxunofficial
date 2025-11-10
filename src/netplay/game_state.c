@@ -2,6 +2,7 @@
 #include "sf33rd/Source/Game/engine/plcnt.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
 #include "sf33rd/Source/Game/select_timer.h"
+#include "sf33rd/Source/Game/system/work_sys.h"
 #include "sf33rd/Source/Game/ui/count.h"
 
 #include <SDL3/SDL.h>
@@ -465,6 +466,10 @@ void GameState_Save(GameState* dst) {
     GS_SAVE(Random_ix32_ex_com);
     GS_SAVE(Random_ix16_bg);
     GS_SAVE(Opening_Now);
+
+    dst->Demo_Ptr_Offset[0] = Demo_Ptr[0] - Replay_w.io_unit.key_buff[0];
+    dst->Demo_Ptr_Offset[1] = Demo_Ptr[1] - Replay_w.io_unit.key_buff[1];
+    GS_SAVE(Replay_w);
 }
 
 #define GS_LOAD(member) SDL_memcpy(&member, &src->member, sizeof(member))
@@ -926,4 +931,8 @@ void GameState_Load(const GameState* src) {
     GS_LOAD(Random_ix32_ex_com);
     GS_LOAD(Random_ix16_bg);
     GS_LOAD(Opening_Now);
+
+    GS_LOAD(Replay_w);
+    Demo_Ptr[0] = Replay_w.io_unit.key_buff[0] + src->Demo_Ptr_Offset[0];
+    Demo_Ptr[1] = Replay_w.io_unit.key_buff[1] + src->Demo_Ptr_Offset[1];
 }

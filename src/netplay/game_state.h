@@ -468,6 +468,10 @@ typedef struct GameState {
     s16 Random_ix32_ex_com;
     s16 Random_ix16_bg;
     s16 Opening_Now;
+
+    // Replay state
+    ptrdiff_t Demo_Ptr_Offset[2];
+    _REPLAY_W Replay_w;
 } GameState;
 
 void GameState_Save(GameState* dst);
