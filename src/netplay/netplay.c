@@ -91,6 +91,7 @@ static void LossyAdapter_SendData(GekkoNetAddress* addr, const char* data, int l
 static void setup_vs_mode() {
     // This is pretty much a copy of logic from menu.c
     task[TASK_MENU].r_no[0] = 5; // go to idle routine (doing nothing)
+    Menu_Suicide[0] = 1;
     cpExitTask(TASK_SAVER);
 
     // From Mode_Select in menu.c
