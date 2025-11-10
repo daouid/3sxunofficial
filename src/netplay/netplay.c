@@ -11,6 +11,7 @@
 #include "sf33rd/Source/Game/rendering/color3rd.h"
 #include "sf33rd/Source/Game/rendering/mtrans.h"
 #include "sf33rd/Source/Game/rendering/texcash.h"
+#include "sf33rd/Source/Game/select_timer.h"
 #include "sf33rd/Source/Game/system/sys_sub.h"
 #include "sf33rd/Source/Game/system/work_sys.h"
 #include "sf33rd/utils/djb2_hash.h"
@@ -93,8 +94,23 @@ static void setup_vs_mode() {
     cpExitTask(TASK_SAVER);
 
     // From Mode_Select in menu.c
+    Present_Mode = 1;
+    E_No[0] = 1;
+    E_No[1] = 2;
+    E_No[2] = 2;
+    E_No[3] = 0;
+
+    for (int i = 0; i < 4; i++) {
+        Menu_Suicide[i] = 0;
+    }
+
     Clear_Personal_Data(0);
     Clear_Personal_Data(1);
+    Menu_Cursor_Y[0] = 0;
+    Cursor_Y_Pos[0][1] = 0;
+    Cursor_Y_Pos[0][2] = 0;
+    Cursor_Y_Pos[0][3] = 0;
+
     for (int i = 0; i < 4; i++) {
         Vital_Handicap[i][0] = 7;
         Vital_Handicap[i][1] = 7;
@@ -120,6 +136,7 @@ static void setup_vs_mode() {
     task[TASK_GAME].condition = 3;
 
     E_Timer = 0; // E_Timer can have different values depending on when the session was initiated
+    select_timer_state_reset();
 }
 
 #if defined(LOSSY_ADAPTER)
