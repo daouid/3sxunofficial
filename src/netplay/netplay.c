@@ -11,6 +11,7 @@
 #include "sf33rd/Source/Game/rendering/color3rd.h"
 #include "sf33rd/Source/Game/rendering/mtrans.h"
 #include "sf33rd/Source/Game/rendering/texcash.h"
+#include "sf33rd/Source/Game/select_timer.h"
 #include "sf33rd/Source/Game/system/sys_sub.h"
 #include "sf33rd/Source/Game/system/work_sys.h"
 #include "sf33rd/utils/djb2_hash.h"
@@ -100,6 +101,7 @@ static void setup_vs_mode() {
     grade_check_work_1st_init(1, 0);
     grade_check_work_1st_init(1, 1);
     Setup_Training_Difficulty();
+    SelectTimer_Init();
 
     G_No[1] = 12;
     G_No[2] = 1;
