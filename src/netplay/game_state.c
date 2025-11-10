@@ -1,17 +1,18 @@
 #include "netplay/game_state.h"
+#include "sf33rd/Source/Game/engine/grade.h"
 #include "sf33rd/Source/Game/engine/plcnt.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
 #include "sf33rd/Source/Game/select_timer.h"
+#include "sf33rd/Source/Game/system/sysdir.h"
 #include "sf33rd/Source/Game/system/work_sys.h"
 #include "sf33rd/Source/Game/ui/count.h"
-#include "sf33rd/Source/Game/system/sysdir.h"
 #include "sf33rd/Source/Game/engine/vital.h"
-#include "sf33rd/Source/Game/engine/plcnt.h"
 #include "sf33rd/Source/Game/engine/hitcheck.h"
-
 #include <SDL3/SDL.h>
 
 #define GS_SAVE(member) SDL_memcpy(&dst->member, &member, sizeof(member))
+#define GS_LOAD(member) SDL_memcpy(&member, &src->member, sizeof(member))
+#define SDL_copya(dst, src) SDL_memcpy(dst, src, sizeof(src))
 
 void GameState_Save(GameState* dst) {
     GS_SAVE(plw);
@@ -479,9 +480,16 @@ void GameState_Save(GameState* dst) {
     GS_SAVE(vital_dec_timer);
     GS_SAVE(sag_inc_timer);
     GS_SAVE(ca_check_flag);
-}
 
-#define GS_LOAD(member) SDL_memcpy(&member, &src->member, sizeof(member))
+    // grade
+    SDL_copya(dst->judge_gals, judge_gals);
+    SDL_copya(dst->judge_com, judge_com);
+    SDL_copya(dst->judge_final, judge_final);
+    SDL_copya(dst->judge_item, judge_item);
+
+    // sysdir
+    SDL_copya(dst->system_dir, system_dir);
+}
 
 void GameState_Load(const GameState* src) {
     GS_LOAD(plw);
@@ -621,7 +629,7 @@ void GameState_Load(const GameState* src) {
     GS_LOAD(Player_Color);
     GS_LOAD(PP_Priority);
     GS_LOAD(OK_Priority);
-    GS_LOAD(Stock_My_char);
+    GS_SAVE(Stock_My_char);
     GS_LOAD(Stock_Player_Color);
     GS_LOAD(Music_Fade);
     GS_LOAD(Stop_SG);
@@ -949,4 +957,13 @@ void GameState_Load(const GameState* src) {
     GS_LOAD(vital_dec_timer);
     GS_LOAD(sag_inc_timer);
     GS_LOAD(ca_check_flag);
+
+    // grade
+    SDL_copya(judge_gals, src->judge_gals);
+    SDL_copya(judge_com, src->judge_com);
+    SDL_copya(judge_final, src->judge_final);
+    SDL_copya(judge_item, src->judge_item);
+
+    // sysdir
+    SDL_copya(system_dir, src->system_dir);
 }

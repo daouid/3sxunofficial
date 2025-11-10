@@ -482,6 +482,15 @@ typedef struct GameState {
 
     // hitcheck
     u16 ca_check_flag;
+
+    // grade
+    JudgeGals judge_gals[2];
+    JudgeCom judge_com[2];
+    GradeFinalData judge_final[2][2];
+    GradeData judge_item[2][2];
+
+    // sysdir
+    SystemDir system_dir[6];
 } GameState;
 
 void GameState_Save(GameState* dst);
