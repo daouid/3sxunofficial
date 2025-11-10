@@ -173,6 +173,8 @@ static void configure_gekko() {
     gekko_net_adapter_set(session, gekko_default_adapter(local_port));
 #endif
 
+    G_Timer = 0;
+
     printf("starting a session for player %d at port %hu\n", player_number, local_port);
 
     char remote_address_str[100];
@@ -529,10 +531,13 @@ void Netplay_Begin() {
 void Netplay_Run() {
     switch (session_state) {
     case SESSION_TRANSITIONING:
-        if (game_ready_to_run_character_select()) {
+        if (!game_ready_to_run_character_select()) {
+            step_game(true);
+        } else {
             configure_gekko();
             session_state = SESSION_CONNECTING;
         }
+
         break;
 
     case SESSION_CONNECTING:
