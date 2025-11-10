@@ -158,6 +158,7 @@ int main(int argc, char* argv[]) {
         step_1();
     }
 
+    Netplay_End();
     AFS_Finish();
     SDLApp_Quit();
     return 0;

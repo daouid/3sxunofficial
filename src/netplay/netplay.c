@@ -930,6 +930,8 @@ int Netplay_GetPlayer() {
 }
 
 void Netplay_Begin() {
+    Netplay_End();
+
     setup_vs_mode();
     session_state = SESSION_TRANSITIONING;
 }
@@ -955,4 +957,14 @@ void Netplay_Run() {
         // Do nothing
         break;
     }
+}
+
+void Netplay_End() {
+    if (session == NULL) {
+        return;
+    }
+
+    gekko_destroy(session);
+    session = NULL;
+    session_state = SESSION_IDLE;
 }

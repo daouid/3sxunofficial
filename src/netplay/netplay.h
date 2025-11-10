@@ -7,5 +7,6 @@ void Netplay_SetPlayer(int player);
 int Netplay_GetPlayer();
 void Netplay_Begin();
 void Netplay_Run();
+void Netplay_End();
 
 #endif
