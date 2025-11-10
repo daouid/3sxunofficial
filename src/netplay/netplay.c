@@ -11,7 +11,6 @@
 #include "sf33rd/Source/Game/rendering/color3rd.h"
 #include "sf33rd/Source/Game/rendering/mtrans.h"
 #include "sf33rd/Source/Game/rendering/texcash.h"
-#include "sf33rd/Source/Game/select_timer.h"
 #include "sf33rd/Source/Game/system/sys_sub.h"
 #include "sf33rd/Source/Game/system/work_sys.h"
 #include "sf33rd/utils/djb2_hash.h"
@@ -92,6 +91,16 @@ static void setup_vs_mode() {
     // This is pretty much a copy of logic from menu.c
     task[TASK_MENU].r_no[0] = 5; // go to idle routine (doing nothing)
     cpExitTask(TASK_SAVER);
+
+    // From Mode_Select in menu.c
+    Clear_Personal_Data(0);
+    Clear_Personal_Data(1);
+    for (int i = 0; i < 4; i++) {
+        Vital_Handicap[i][0] = 7;
+        Vital_Handicap[i][1] = 7;
+    }
+    VS_Stage = 0x14;
+
     plw[0].wu.operator = 1;
     plw[1].wu.operator = 1;
     Operator_Status[0] = 1;
@@ -101,7 +110,6 @@ static void setup_vs_mode() {
     grade_check_work_1st_init(1, 0);
     grade_check_work_1st_init(1, 1);
     Setup_Training_Difficulty();
-    SelectTimer_Init();
 
     G_No[1] = 12;
     G_No[2] = 1;

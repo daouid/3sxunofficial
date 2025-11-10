@@ -240,8 +240,6 @@ class DWARFParser:
                             state = return_to_state
 
         for struct in self.structs:
-            if "_State" in struct.name:
-                print(f"Found struct: {struct.name}")
             self.struct_name_to_struct[struct.name] = struct
 
 def find_state_pairs() -> list[tuple[Path, Path, int]]:
@@ -278,7 +276,7 @@ def compare_states(parser: DWARFParser):
             byte2 = pl2_state[i]
 
             if byte1 != byte2:
-                path = ".".join(parser.find_member("_State", i))
+                path = ".".join(parser.find_member("State", i))
                 print(f"{frame}: mismatch at byte 0x{i:X} (0x{byte1:X} vs 0x{byte2:X}). Path: {path}")
 
 def main():
