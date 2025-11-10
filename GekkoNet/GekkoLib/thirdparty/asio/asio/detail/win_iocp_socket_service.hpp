@@ -205,6 +205,11 @@ public:
       impl.remote_endpoint_ = endpoint_type();
     }
 
+    if (protocol.type() == SOCK_DGRAM) {
+        BOOL opt = TRUE;
+        ::setsockopt(impl.socket_, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt));
+    }
+
     ASIO_ERROR_LOCATION(ec);
     return ec;
   }
