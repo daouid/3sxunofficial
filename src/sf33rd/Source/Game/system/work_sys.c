@@ -48,3 +48,4 @@ _REPLAY_W Replay_w;
 SystemDir system_dir[6];
 Permission permission_player[6];
 struct _SAVE_W save_w[6];
+bool g_autostart_netplay = false;

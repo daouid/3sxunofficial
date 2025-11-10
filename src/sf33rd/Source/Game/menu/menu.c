@@ -372,6 +372,12 @@ void Mode_Select(struct _TASK* task_ptr) {
         break;
 
     case 3:
+        if (g_autostart_netplay) {
+            g_autostart_netplay = false;
+            Menu_Cursor_Y[0] = 4;
+            IO_Result = 0x100;
+        }
+
         if (Connect_Status == 0 && Menu_Cursor_Y[0] == 1) {
             Menu_Cursor_Y[0] = 2;
         } else {

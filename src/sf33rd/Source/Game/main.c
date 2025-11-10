@@ -143,6 +143,7 @@ int main(int argc, char* argv[]) {
 
     if (argc > 1) {
         player = SDL_atoi(argv[1]);
+        g_autostart_netplay = true;
     } else {
         player = 1;
     }

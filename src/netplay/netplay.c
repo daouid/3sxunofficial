@@ -925,6 +925,10 @@ void Netplay_SetPlayer(int player) {
     }
 }
 
+int Netplay_GetPlayer() {
+    return player_number + 1;
+}
+
 void Netplay_Begin() {
     setup_vs_mode();
     session_state = SESSION_TRANSITIONING;
