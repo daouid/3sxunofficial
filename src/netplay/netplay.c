@@ -529,13 +529,10 @@ void Netplay_Begin() {
 void Netplay_Run() {
     switch (session_state) {
     case SESSION_TRANSITIONING:
-        if (!game_ready_to_run_character_select()) {
-            step_game(true);
-        } else {
+        if (game_ready_to_run_character_select()) {
             configure_gekko();
             session_state = SESSION_CONNECTING;
         }
-
         break;
 
     case SESSION_CONNECTING:
