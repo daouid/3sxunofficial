@@ -472,6 +472,28 @@ typedef struct GameState {
     WORK_CP wcp[2];
     T_PL_LVR t_pl_lvr[2];
     WAZA_WORK waza_work[2][56];
+    // Replay state
+    ptrdiff_t Demo_Ptr_Offset[2];
+    _REPLAY_W Replay_w;
+
+    // omop/vital
+    s16 omop_vital_ix[2];
+    u16 vital_dec_timer;
+
+    // spgauge
+    s16 sag_inc_timer[2];
+
+    // hitcheck
+    u16 ca_check_flag;
+
+    // grade
+    JudgeGals judge_gals[2];
+    JudgeCom judge_com[2];
+    GradeFinalData judge_final[2][2];
+    GradeData judge_item[2][2];
+
+    // sysdir
+    SystemDir system_dir[6];
 } GameState;
 
 void GameState_Save(GameState* dst);

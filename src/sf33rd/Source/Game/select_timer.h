@@ -16,5 +16,6 @@ extern SelectTimerState select_timer_state;
 void SelectTimer_Init();
 void SelectTimer_Finish();
 void SelectTimer_Run();
+void select_timer_state_reset();
 
 #endif

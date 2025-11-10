@@ -47,6 +47,10 @@ void SelectTimer_Finish() {
     SDL_zero(select_timer_state);
 }
 
+void select_timer_state_reset() {
+    SDL_zero(select_timer_state);
+}
+
 void SelectTimer_Run() {
     if (Present_Mode == 4 || Present_Mode == 5) {
         return;

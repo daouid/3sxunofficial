@@ -75,4 +75,6 @@ extern struct _TASK task[11];
 extern MTX BgMATRIX[9];
 extern TrainingData Training[3];
 
+extern bool g_autostart_netplay;
+
 #endif
