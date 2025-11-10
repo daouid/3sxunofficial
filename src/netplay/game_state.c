@@ -4,6 +4,10 @@
 #include "sf33rd/Source/Game/select_timer.h"
 #include "sf33rd/Source/Game/system/work_sys.h"
 #include "sf33rd/Source/Game/ui/count.h"
+#include "sf33rd/Source/Game/system/sysdir.h"
+#include "sf33rd/Source/Game/engine/vital.h"
+#include "sf33rd/Source/Game/engine/plcnt.h"
+#include "sf33rd/Source/Game/engine/hitcheck.h"
 
 #include <SDL3/SDL.h>
 
@@ -472,8 +476,9 @@ void GameState_Save(GameState* dst) {
     GS_SAVE(Replay_w);
 
     GS_SAVE(omop_vital_ix);
-    GS_SAVE(omop_s_vital);
+    GS_SAVE(vital_dec_timer);
     GS_SAVE(sag_inc_timer);
+    GS_SAVE(ca_check_flag);
 }
 
 #define GS_LOAD(member) SDL_memcpy(&member, &src->member, sizeof(member))
@@ -941,6 +946,7 @@ void GameState_Load(const GameState* src) {
     Demo_Ptr[1] = Replay_w.io_unit.key_buff[1] + src->Demo_Ptr_Offset[1];
 
     GS_LOAD(omop_vital_ix);
-    GS_LOAD(omop_s_vital);
+    GS_LOAD(vital_dec_timer);
     GS_LOAD(sag_inc_timer);
+    GS_LOAD(ca_check_flag);
 }

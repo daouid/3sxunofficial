@@ -475,10 +475,13 @@ typedef struct GameState {
 
     // omop/vital
     s16 omop_vital_ix[2];
-    s16 omop_s_vital[2];
+    u16 vital_dec_timer;
 
     // spgauge
     s16 sag_inc_timer[2];
+
+    // hitcheck
+    u16 ca_check_flag;
 } GameState;
 
 void GameState_Save(GameState* dst);
