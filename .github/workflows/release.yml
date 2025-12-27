@@ -13,10 +13,10 @@ jobs:
       image: ubuntu:25.04
     steps:
       # Step 1: Install Git FIRST
-      - name: Install Git
+      - name: Install Git and curl
         run: |
           apt-get update
-          apt-get install -y git
+          apt-get install -y git curl
 
       # Step 2: Now checkout can use Git to handle submodules
       - name: Checkout repository
