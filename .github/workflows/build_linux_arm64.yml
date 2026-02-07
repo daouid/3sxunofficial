@@ -64,7 +64,7 @@ jobs:
 
           - name: Build FFmpeg (aarch64 cross-compile)
             run: |
-                cd third_party
+                mkdir -p $GITHUB_WORKSPACE/third_party && cd $GITHUB_WORKSPACE/third_party
                 mkdir -p ffmpeg && cd ffmpeg
                 if [ ! -d "build" ]; then
                     FFMPEG="ffmpeg-8.0"
@@ -93,7 +93,7 @@ jobs:
 
           - name: Build SDL3 (aarch64 cross-compile)
             run: |
-                cd third_party
+                mkdir -p $GITHUB_WORKSPACE/third_party && cd $GITHUB_WORKSPACE/third_party
                 mkdir -p sdl3 && cd sdl3
                 if [ ! -d "build" ]; then
                     SDL="SDL3-3.2.24"
