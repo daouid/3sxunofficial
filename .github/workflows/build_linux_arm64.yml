@@ -57,11 +57,13 @@ jobs:
                   libx11-dev:arm64 libxext-dev:arm64 libxrandr-dev:arm64 \
                   libxcursor-dev:arm64 libxfixes-dev:arm64 libxi-dev:arm64 \
                   libxrender-dev:arm64 libxinerama-dev:arm64 libxtst-dev:arm64 \
-                  libxss-dev:arm64 libxkbcommon-dev:arm64 libdrm-dev:arm64 \
-                  libgbm-dev:arm64 libgl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 \
+                  libxss-dev:arm64 libxkbcommon-dev:arm64 libxkbcommon-x11-dev:arm64 \
+                  libdrm-dev:arm64 libgbm-dev:arm64 \
+                  libgl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 \
                   libegl1-mesa-dev:arm64 libdbus-1-dev:arm64 libudev-dev:arm64 \
-                  libpipewire-0.3-dev:arm64 libwayland-dev:arm64 \
-                  libdecor-0-dev:arm64 wayland-protocols
+                  libpipewire-0.3-dev:arm64 \
+                  libwayland-dev:arm64 libwayland-egl1:arm64 libdecor-0-dev:arm64 \
+                  wayland-protocols
 
           - name: Build FFmpeg (aarch64 cross-compile)
             run: |
