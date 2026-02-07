@@ -10,6 +10,9 @@ mkdir -p "$THIRD_PARTY"
 OS="$(uname -s)"
 echo "Detected OS: $OS"
 
+# Optional: set to "universal" for macOS fat binaries (arm64+x86_64)
+TARGET_ARCH="${TARGET_ARCH:-}"
+
 echo "Using cmake from: $(which cmake)"
 cmake --version
 
