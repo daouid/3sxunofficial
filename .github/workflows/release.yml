@@ -60,9 +60,36 @@ jobs:
           path: artifacts/3sx-linux-x86_64.zip
 
   build-linux-arm64:
-    name: Build (Linux ARM64)
+    name: Build (Linux ARM64 Cross-Compile)
     runs-on: ubuntu-latest
+    container:
+      image: ubuntu:25.04
     steps:
+      - name: Install Git and cross-compile toolchain
+        run: |
+          apt-get update
+          apt-get install -y git curl xz-utils
+
+          # ARM64 packages live on ports.ubuntu.com, not archive.ubuntu.com.
+          dpkg --add-architecture arm64
+
+          # Pin existing DEB822 sources to amd64-only (ubuntu:25.04 format)
+          for f in /etc/apt/sources.list.d/*.sources; do
+              if [ -f "$f" ] && ! grep -q 'Architectures:' "$f"; then
+                  sed -i '/^Types:/a Architectures: amd64' "$f"
+              fi
+          done
+
+          # Add arm64 sources from ports.ubuntu.com
+          printf '%s\n' \
+              'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports plucky main restricted universe multiverse' \
+              'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports plucky-updates main restricted universe multiverse' \
+              'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports plucky-security main restricted universe multiverse' \
+              > /etc/apt/sources.list.d/arm64-ports.list
+
+          apt-get update
+          apt-get install -y crossbuild-essential-arm64 cmake ninja-build make pkg-config clang zip file qemu-user-static
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -72,33 +99,93 @@ jobs:
         uses: actions/cache@v4
         with:
           path: third_party
-          key: Linux-arm64-deps-${{ hashFiles('build-deps.sh') }}
+          key: Linux-arm64-cross-deps-${{ hashFiles('build-deps.sh') }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
-      - name: Build in ARM64 container
+      - name: Install ARM64 build dependencies
         run: |
-          docker run --rm --platform linux/arm64 \
-            -v ${{ github.workspace }}:/src -w /src \
-            ubuntu:25.04 bash -c "
-              apt-get update &&
-              apt-get install -y git curl nasm clang zip \
-                \$(cat tools/requirements-ubuntu-sdl3.txt) &&
-              chmod +x build-deps.sh &&
-              ./build-deps.sh &&
-              CC=clang CXX=clang++ cmake -B build -DCMAKE_BUILD_TYPE=Release &&
-              cmake --build build --parallel 2 &&
-              mkdir -p artifacts pkg/bin pkg/lib &&
-              cp build/3sx pkg/bin/ &&
-              cp third_party/ffmpeg/build/lib/*.so* pkg/lib/ &&
-              cp third_party/sdl3/build/lib/*.so* pkg/lib/ &&
-              cp dist/3sx.sh pkg/ &&
-              chmod +x pkg/3sx.sh pkg/bin/3sx &&
-              cd pkg && zip -r ../artifacts/3sx-linux-arm64.zip . && cd ..
-            "
+          apt-get install -y \
+            libasound2-dev:arm64 libpulse-dev:arm64 \
+            libx11-dev:arm64 libxext-dev:arm64 libxrandr-dev:arm64 \
+            libxcursor-dev:arm64 libxfixes-dev:arm64 libxi-dev:arm64 \
+            libxrender-dev:arm64 libxinerama-dev:arm64 libxtst-dev:arm64 \
+            libxss-dev:arm64 libxkbcommon-dev:arm64 libxkbcommon-x11-dev:arm64 \
+            libdrm-dev:arm64 libgbm-dev:arm64 \
+            libgl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 \
+            libegl1-mesa-dev:arm64 libdbus-1-dev:arm64 libudev-dev:arm64 \
+            libpipewire-0.3-dev:arm64 \
+            libwayland-dev:arm64 libwayland-egl1:arm64 libdecor-0-dev:arm64 \
+            wayland-protocols
+
+      - name: Build FFmpeg (aarch64 cross-compile)
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/third_party && cd $GITHUB_WORKSPACE/third_party
+          mkdir -p ffmpeg && cd ffmpeg
+          if [ ! -d "build" ]; then
+              FFMPEG="ffmpeg-8.0"
+              if [ ! -d "$FFMPEG" ]; then
+                  curl -L -O "https://ffmpeg.org/releases/$FFMPEG.tar.xz"
+                  tar xf "$FFMPEG.tar.xz"
+              fi
+              cd "$FFMPEG"
+              mkdir -p build && cd build
+              ../configure \
+                  --prefix="$(pwd)/../../build" \
+                  --arch=aarch64 \
+                  --target-os=linux \
+                  --enable-cross-compile \
+                  --cross-prefix=aarch64-linux-gnu- \
+                  --disable-x86asm \
+                  --disable-all --disable-autodetect \
+                  --disable-static --enable-shared \
+                  --enable-avcodec --enable-avformat --enable-avutil --enable-swresample \
+                  --enable-decoder=adpcm_adx --enable-parser=adx --enable-muxer=adx \
+                  --enable-pic --extra-cflags="-fPIC" \
+                  --extra-ldflags="-Wl,-rpath,\$ORIGIN/../lib"
+              make -j$(nproc)
+              make install
+          fi
+
+      - name: Build SDL3 (aarch64 cross-compile)
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/third_party && cd $GITHUB_WORKSPACE/third_party
+          mkdir -p sdl3 && cd sdl3
+          if [ ! -d "build" ]; then
+              SDL="SDL3-3.2.24"
+              if [ ! -d "$SDL" ]; then
+                  curl -L -O "https://libsdl.org/release/$SDL.tar.gz"
+                  tar xf "$SDL.tar.gz"
+              fi
+              cd "$SDL"
+              mkdir -p build && cd build
+              # Point pkg-config at arm64 .pc files so SDL3 finds X11/Wayland
+              export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig
+              export PKG_CONFIG_LIBDIR=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig
+              cmake .. \
+                  -DCMAKE_TOOLCHAIN_FILE=${GITHUB_WORKSPACE}/cmake/aarch64-linux-gnu.cmake \
+                  -DCMAKE_INSTALL_PREFIX="$(pwd)/../../build" \
+                  -DBUILD_SHARED_LIBS=ON \
+                  -DSDL_STATIC=OFF
+              cmake --build . -j$(nproc)
+              cmake --install .
+          fi
+
+      - name: Build for Linux ARM64
+        run: |
+          cmake -B build-linux-arm64 \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_TOOLCHAIN_FILE=cmake/aarch64-linux-gnu.cmake \
+              -G Ninja
+          cmake --build build-linux-arm64 --parallel
+
+      - name: Package artifact
+        run: |
+          mkdir -p artifacts pkg/bin pkg/lib
+          cp build-linux-arm64/3sx pkg/bin/
+          cp third_party/ffmpeg/build/lib/*.so* pkg/lib/
+          cp third_party/sdl3/build/lib/*.so* pkg/lib/
+          cp dist/3sx.sh pkg/
+          chmod +x pkg/3sx.sh pkg/bin/3sx
+          cd pkg && zip -r ../artifacts/3sx-linux-arm64.zip . && cd ..
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
