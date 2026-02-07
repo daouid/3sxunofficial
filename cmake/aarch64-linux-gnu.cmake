@@ -4,15 +4,14 @@
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR aarch64)
 
-# Cross-compiler
+# Cross-compiler (don't set CMAKE_SYSROOT — the Debian cross-gcc has it built in)
 set(CMAKE_C_COMPILER   aarch64-linux-gnu-gcc)
 set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)
 
-# Sysroot (where aarch64 headers and libs live)
-set(CMAKE_SYSROOT /usr/aarch64-linux-gnu)
-set(CMAKE_FIND_ROOT_PATH /usr/aarch64-linux-gnu)
+# Help CMake find arm64 libraries from multiarch packages
+set(CMAKE_FIND_ROOT_PATH /usr/aarch64-linux-gnu /usr/lib/aarch64-linux-gnu)
 
-# Search paths: headers/libs from target sysroot, programs from host
+# Search paths: headers/libs from target, programs from host
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
