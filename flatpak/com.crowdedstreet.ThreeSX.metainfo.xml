@@ -19,6 +19,8 @@
     </p>
   </description>
 
+  <icon type="stock">com.crowdedstreet.ThreeSX</icon>
+
   <launchable type="desktop-id">com.crowdedstreet.ThreeSX.desktop</launchable>
 
   <url type="homepage">https://github.com/crowded-street/3sx</url>

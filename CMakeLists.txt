@@ -221,9 +221,9 @@ if(UNIX AND NOT APPLE)
         DESTINATION share/applications)
     install(FILES flatpak/com.crowdedstreet.ThreeSX.metainfo.xml
         DESTINATION share/metainfo)
-    # Uncomment when an icon is available:
-    # install(FILES flatpak/com.crowdedstreet.ThreeSX.png
-    #     DESTINATION share/icons/hicolor/128x128/apps)
+    install(FILES flatpak/3sxlogo_128.png
+        DESTINATION share/icons/hicolor/128x128/apps
+        RENAME com.crowdedstreet.ThreeSX.png)
 endif()
 
 # ======================================
