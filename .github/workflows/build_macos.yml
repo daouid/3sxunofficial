@@ -9,6 +9,8 @@ on:
 jobs:
     build:
         runs-on: macos-latest
+        env:
+            TARGET_ARCH: universal
 
         steps:
           - name: Checkout repository
@@ -20,14 +22,12 @@ jobs:
             uses: actions/cache@v4
             with:
                 path: third_party
-                key: ${{ runner.os }}-deps-${{ hashFiles('build-deps.sh') }}
+                key: ${{ runner.os }}-universal-deps-${{ hashFiles('build-deps.sh') }}
 
           - name: Install dependencies
             run: sh build-deps.sh
 
           - name: Build for macOS
-            env:
-              TARGET_ARCH: universal
             run: |
                 set -o pipefail
                 cmake -B build \
