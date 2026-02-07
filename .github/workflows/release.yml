@@ -26,7 +26,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: third_party
-          key: ${{ runner.os }}-x86_64-deps-${{ hashFiles('build-deps.sh') }}
+          key: Linux-deps-${{ hashFiles('build-deps.sh') }}
 
       - name: Install build dependencies
         run: |
@@ -67,6 +67,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Cache ARM64 dependencies
+        uses: actions/cache@v4
+        with:
+          path: third_party
+          key: Linux-arm64-deps-${{ hashFiles('build-deps.sh') }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -131,7 +137,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: third_party
-          key: ${{ runner.os }}-deps-${{ hashFiles('build-deps.sh') }}
+          key: Windows-deps-${{ hashFiles('build-deps.sh') }}
 
       - name: Build dependencies from source
         run: |
@@ -220,6 +226,8 @@ jobs:
         with:
           manifest-path: com.crowdedstreet.ThreeSX.yml
           bundle: 3sx.flatpak
+          cache: true
+          cache-key: flatpak-builder-${{ hashFiles('com.crowdedstreet.ThreeSX.yml') }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
