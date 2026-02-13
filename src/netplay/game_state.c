@@ -640,6 +640,33 @@ void GameState_Save(GameState* dst) {
     GS_SAVE(old_mes_no3);
     GS_SAVE(old_mes_no_pl);
     GS_SAVE(mes_timer);
+
+    // work_sys — rollback-critical state
+
+    GS_SAVE(bg_pos);
+    GS_SAVE(fm_pos);
+    GS_SAVE(bg_prm);
+    GS_SAVE(system_timer);
+    GS_SAVE(Gill_Appear_Flag);
+
+    // plcnt — DIP switch combat config
+
+    GS_SAVE(cmd_sel);
+    GS_SAVE(no_sa);
+
+    // sc_sub
+
+    GS_SAVE(Hnc_Num);
+    GS_SAVE(end_w);
+    GS_SAVE(scr_sc);
+    GS_SAVE(X_Adjust);
+    GS_SAVE(Y_Adjust);
+
+    GS_SAVE(BgMATRIX);
+    GS_SAVE(vm_w);
+    GS_SAVE(ck_ex_option);
+    GS_SAVE(X_Adjust_Buff);
+    GS_SAVE(Y_Adjust_Buff);
 }
 
 #define GS_LOAD(member) SDL_memcpy(&member, &src->member, sizeof(member))
@@ -1264,4 +1291,31 @@ void GameState_Load(const GameState* src) {
     GS_LOAD(old_mes_no3);
     GS_LOAD(old_mes_no_pl);
     GS_LOAD(mes_timer);
+
+    // work_sys — rollback-critical state
+
+    GS_LOAD(bg_pos);
+    GS_LOAD(fm_pos);
+    GS_LOAD(bg_prm);
+    GS_LOAD(system_timer);
+    GS_LOAD(Gill_Appear_Flag);
+
+    // plcnt — DIP switch combat config
+
+    GS_LOAD(cmd_sel);
+    GS_LOAD(no_sa);
+
+    // sc_sub
+
+    GS_LOAD(Hnc_Num);
+    GS_LOAD(end_w);
+    GS_LOAD(scr_sc);
+    GS_LOAD(X_Adjust);
+    GS_LOAD(Y_Adjust);
+
+    GS_LOAD(BgMATRIX);
+    GS_LOAD(vm_w);
+    GS_LOAD(ck_ex_option);
+    GS_LOAD(X_Adjust_Buff);
+    GS_LOAD(Y_Adjust_Buff);
 }

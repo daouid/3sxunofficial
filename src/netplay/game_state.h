@@ -10,8 +10,11 @@
 #include "sf33rd/Source/Game/engine/workuser.h"
 #include "sf33rd/Source/Game/select_timer.h"
 #include "sf33rd/Source/Game/stage/bg.h"
+#include "sf33rd/Source/Game/system/work_sys.h"
+#include "sf33rd/Source/Game/ui/sc_sub.h"
 #include "structs.h"
 #include "types.h"
+#include "sf33rd/Source/Game/ending/end_data.h"
 
 typedef struct GameState {
     bool Scene_Cut;
@@ -637,6 +640,38 @@ typedef struct GameState {
     s16 old_mes_no3;
     s16 old_mes_no_pl;
     s16 mes_timer;
+
+    // work_sys — rollback-critical state
+
+    BG_POS bg_pos[8];
+    FM_POS fm_pos[8];
+    BackgroundParameters bg_prm[8];
+    u32 system_timer;
+    s8 Gill_Appear_Flag;
+
+    // plcnt — DIP switch combat config
+
+    char cmd_sel[2];
+    char no_sa[2];
+
+    // sc_sub
+
+    s16 Hnc_Num;
+
+    // ending
+    END_W end_w;
+
+    // work_sys
+    f32 scr_sc;
+    s32 X_Adjust;
+    s32 Y_Adjust;
+    
+    // Additional globals
+    MTX BgMATRIX[9];
+    struct _VM_W vm_w;
+    _EXTRA_OPTION ck_ex_option;
+    s32 X_Adjust_Buff[3];
+    s32 Y_Adjust_Buff[3];
 } GameState;
 
 void GameState_Save(GameState* dst);

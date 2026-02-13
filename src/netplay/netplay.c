@@ -19,7 +19,9 @@
 
 #include <stdbool.h>
 
+#define Game GekkoGame // workaround: upstream GekkoSessionType::Game collides with void Game()
 #include "gekkonet.h"
+#undef Game
 #include <SDL3/SDL.h>
 
 #include <stdio.h>
@@ -66,8 +68,6 @@ static int frame_skip_timer = 0;
 
 #if defined(DEBUG)
 #define STATE_BUFFER_MAX 20
-
-static State state_buffer[STATE_BUFFER_MAX] = { 0 };
 #endif
 
 #if defined(LOSSY_ADAPTER)
@@ -131,6 +131,23 @@ static void setup_vs_mode() {
     Random_ix32 = 0;
     Clear_Flash_Init(4);
 
+    // Ensure both peers start with identical timer state regardless of local DIP switch settings.
+    // Without this, save_w[Present_Mode].Time_Limit can differ per player's config.
+    Counter_hi = 99;
+    Counter_low = 60;
+
+    // Flash_Complete runs during the character select screen at slightly different
+    // speeds per peer depending on when they connected. Zero it to sync.
+    Flash_Complete[0] = 0;
+    Flash_Complete[1] = 0;
+
+    // BG scroll positions and parameters evolve independently during the transition
+    // phase before synced gameplay. Zero them so both peers start identical.
+    SDL_zeroa(bg_pos);
+    SDL_zeroa(fm_pos);
+    SDL_zeroa(bg_prm);
+    system_timer = 0;
+
     clean_input_buffers();
 }
 
@@ -157,7 +174,7 @@ static void configure_gekko() {
     config.desync_detection = true;
 #endif
 
-    if (gekko_create(&session)) {
+    if (gekko_create(&session, GekkoGame)) {
         gekko_start(session, &config);
     } else {
         printf("Session is already running! probably incorrect.\n");
@@ -211,109 +228,57 @@ static u16 recall_input(int player, int frame) {
 }
 
 #if defined(DEBUG)
-static uint32_t calculate_checksum(const State* state) {
-    uint32_t hash = djb2_init();
-    hash = djb2_updatep(hash, state);
-    return hash;
+// Per-subsystem checksums for faster desync triage — when a desync fires,
+// we can immediately tell which section (player, bg, effects...) diverged.
+typedef struct {
+    uint32_t plw0;
+    uint32_t plw1;
+    uint32_t bg;
+    uint32_t tasks;
+    uint32_t effects;
+    uint32_t globals;
+    uint32_t combined;
+} SectionedChecksum;
+
+static SectionedChecksum calculate_sectioned_checksums(const State* state) {
+    SectionedChecksum sc;
+
+    uint32_t h;
+
+    h = djb2_init();
+    h = djb2_update_mem(h, (const uint8_t*)&state->gs.plw[0], sizeof(PLW));
+    sc.plw0 = h;
+
+    h = djb2_init();
+    h = djb2_update_mem(h, (const uint8_t*)&state->gs.plw[1], sizeof(PLW));
+    sc.plw1 = h;
+
+    h = djb2_init();
+    h = djb2_update_mem(h, (const uint8_t*)&state->gs.bg_w, sizeof(state->gs.bg_w));
+    sc.bg = h;
+
+    h = djb2_init();
+    h = djb2_update_mem(h, (const uint8_t*)&state->gs.task, sizeof(state->gs.task));
+    sc.tasks = h;
+
+    h = djb2_init();
+    h = djb2_update_mem(h, (const uint8_t*)&state->es, sizeof(EffectState));
+    sc.effects = h;
+
+    // Combined hash covers the entire state (for GekkoNet exchange)
+    h = djb2_init();
+    h = djb2_updatep(h, state);
+    sc.combined = h;
+
+    // Rough diagnostic only: XOR is not a proper remainder hash,
+    // but good enough to spot which broad area drifted.
+    sc.globals = sc.combined ^ sc.plw0 ^ sc.plw1 ^ sc.bg ^ sc.tasks ^ sc.effects;
+
+    return sc;
 }
 
-/// Zero out all pointers in WORK for dumping
-static void clean_work_pointers(WORK* work) {
-    work->target_adrs = NULL;
-    work->hit_adrs = NULL;
-    work->dmg_adrs = NULL;
-    work->suzi_offset = NULL;
-    SDL_zeroa(work->char_table);
-    work->se_random_table = NULL;
-    work->step_xy_table = NULL;
-    work->move_xy_table = NULL;
-    work->overlap_char_tbl = NULL;
-    work->olc_ix_table = NULL;
-    work->rival_catch_tbl = NULL;
-    work->curr_rca = NULL;
-    work->set_char_ad = NULL;
-    work->hit_ix_table = NULL;
-    work->body_adrs = NULL;
-    work->h_bod = NULL;
-    work->hand_adrs = NULL;
-    work->h_han = NULL;
-    work->dumm_adrs = NULL;
-    work->h_dumm = NULL;
-    work->catch_adrs = NULL;
-    work->h_cat = NULL;
-    work->caught_adrs = NULL;
-    work->h_cau = NULL;
-    work->attack_adrs = NULL;
-    work->h_att = NULL;
-    work->h_eat = NULL;
-    work->hosei_adrs = NULL;
-    work->h_hos = NULL;
-    work->att_ix_table = NULL;
-    work->my_effadrs = NULL;
 
-    work->current_colcd = 0;
-    work->colcd = 0;
-}
-
-static void clean_plw_pointers(PLW* plw) {
-    clean_work_pointers(&plw->wu);
-    plw->cp = NULL;
-    plw->dm_step_tbl = NULL;
-    plw->as = NULL;
-    plw->sa = NULL;
-    plw->py = NULL;
-}
-
-static void clean_state_pointers(State* state) {
-    for (int i = 0; i < 2; i++) {
-        clean_plw_pointers(&state->gs.plw[i]);
-
-        for (int j = 0; j < 56; j++) {
-            state->gs.waza_work[i][j].w_ptr = NULL;
-        }
-
-        state->gs.spg_dat[i].spgtbl_ptr = NULL;
-        state->gs.spg_dat[i].spgptbl_ptr = NULL;
-    }
-
-    for (int i = 0; i < EFFECT_MAX; i++) {
-        WORK* work = (WORK*)state->es.frw[i];
-        clean_work_pointers(work);
-
-        WORK_Other* work_big = (WORK_Other*)state->es.frw[i];
-        work_big->my_master = NULL;
-    }
-
-    for (int i = 0; i < SDL_arraysize(state->gs.bg_w.bgw); i++) {
-        state->gs.bg_w.bgw[i].bg_address = NULL;
-        state->gs.bg_w.bgw[i].suzi_adrs = NULL;
-        state->gs.bg_w.bgw[i].start_suzi = NULL;
-        state->gs.bg_w.bgw[i].suzi_adrs2 = NULL;
-        state->gs.bg_w.bgw[i].start_suzi2 = NULL;
-        state->gs.bg_w.bgw[i].deff_rl = NULL;
-        state->gs.bg_w.bgw[i].deff_plus = NULL;
-        state->gs.bg_w.bgw[i].deff_minus = NULL;
-    }
-
-    state->gs.ci_pointer = NULL;
-
-    for (int i = 0; i < SDL_arraysize(state->gs.task); i++) {
-        state->gs.task[i].func_adrs = NULL;
-    }
-}
-
-/// Save state in state buffer.
-/// @return Pointer to state as it has been saved.
-static const State* note_state(const State* state, int frame) {
-    if (frame < 0) {
-        frame += STATE_BUFFER_MAX;
-    }
-
-    State* dst = &state_buffer[frame % STATE_BUFFER_MAX];
-    SDL_memcpy(dst, state, sizeof(State));
-    clean_state_pointers(dst);
-    return dst;
-}
+static State state_buffer[STATE_BUFFER_MAX];
 
 static void dump_state(const State* src, const char* filename) {
     SDL_IOStream* io = SDL_IOFromFile(filename, "w");
@@ -349,6 +314,112 @@ static void gather_state(State* dst) {
     es->frwctr_min = frwctr_min;
 }
 
+
+
+// These effect IDs use the WORK_Other_CONN layout (variable-length conn[] tail).
+// Derived by auditing every effXX.c that casts to WORK_Other_CONN*.
+static bool is_work_other_conn(int id) {
+    switch (id) {
+        case 16:  // eff16 (Score Breakdown) - Caused F1549 Desync
+        case 160: // effg0
+        case 170: // effh0
+        case 179: // effh9
+        case 192: // effj2
+        case 211: // effL1
+        case 223: // effm3
+            return true;
+        default:
+            return false;
+    }
+}
+
+// Zero the unused tail of conn[] — entries past num_of_conn are uninitialized
+// heap data that differs between peers. Root cause of the F1549 desync.
+static void sanitize_work_other_conn(WORK* w) {
+    WORK_Other_CONN* wc = (WORK_Other_CONN*)w;
+    int count = wc->num_of_conn;
+    // Safety check: count should be within bounds [0, 108].
+    // 108 is the compile-time size of the conn[] array in WORK_Other_CONN.
+    enum { CONN_MAX = 108 };
+    if (count >= 0 && count < CONN_MAX) {
+        size_t bytes = (CONN_MAX - count) * sizeof(CONN);
+        if (bytes > 0) {
+            SDL_memset(&wc->conn[count], 0, bytes);
+        }
+    }
+}
+
+/// Zero pointer fields so they don't pollute checksums (ASLR makes them differ).
+/// Only ever called on a scratch copy — never on a state Gekko will restore.
+static void sanitize_work_pointers(WORK* w) {
+    w->target_adrs = NULL;
+    w->hit_adrs = NULL;
+    w->dmg_adrs = NULL;
+    w->suzi_offset = NULL;
+    SDL_zeroa(w->char_table);
+    w->se_random_table = NULL;
+    w->step_xy_table = NULL;
+    w->move_xy_table = NULL;
+    w->overlap_char_tbl = NULL;
+    w->olc_ix_table = NULL;
+    w->rival_catch_tbl = NULL;
+    w->curr_rca = NULL;
+    w->set_char_ad = NULL;
+    w->hit_ix_table = NULL;
+    w->body_adrs = NULL;
+    w->h_bod = NULL;
+    w->hand_adrs = NULL;
+    w->h_han = NULL;
+    w->dumm_adrs = NULL;
+    w->h_dumm = NULL;
+    w->catch_adrs = NULL;
+    w->h_cat = NULL;
+    w->caught_adrs = NULL;
+    w->h_cau = NULL;
+    w->attack_adrs = NULL;
+    w->h_att = NULL;
+    w->h_eat = NULL;
+    w->hosei_adrs = NULL;
+    w->h_hos = NULL;
+    w->att_ix_table = NULL;
+    w->my_effadrs = NULL;
+}
+
+/// Mask rendering-only bits/fields from WORK color fields.
+/// - current_colcd, my_col_code: strip 0x2000 player-side palette flag
+/// - colcd: fully zeroed (derived from current_colcd by rendering, can differ entirely)
+/// - extra_col, extra_col_2: strip 0x2000 palette flag
+static void sanitize_work_rendering(WORK* w) {
+    w->current_colcd &= ~0x2000;
+    w->my_col_code   &= ~0x2000;
+    w->colcd          = 0;         // Rendering-derived, not gameplay state
+    w->extra_col     &= ~0x2000;
+    w->extra_col_2   &= ~0x2000;
+}
+
+/// Zero all pointer fields and mask rendering bits in a PLW struct.
+static void sanitize_plw_pointers(PLW* p) {
+    sanitize_work_pointers(&p->wu);
+    sanitize_work_rendering(&p->wu);
+    p->cp = NULL;
+    p->dm_step_tbl = NULL;
+    p->as = NULL;
+    p->sa = NULL;
+    p->py = NULL;
+}
+
+/// Save state in state buffer.
+/// @return Mutable pointer to state as it has been saved.
+static State* note_state(const State* state, int frame) {
+    if (frame < 0) {
+        frame += STATE_BUFFER_MAX;
+    }
+
+    State* dst = &state_buffer[frame % STATE_BUFFER_MAX];
+    SDL_memcpy(dst, state, sizeof(State));
+    return dst;
+}
+
 static void save_state(GekkoGameEvent* event) {
     *event->data.save.state_len = sizeof(State);
     State* dst = (State*)event->data.save.state;
@@ -357,8 +428,145 @@ static void save_state(GekkoGameEvent* event) {
 
 #if defined(DEBUG)
     const int frame = event->data.save.frame;
-    const State* saved_state = note_state(dst, frame);
-    *event->data.save.checksum = calculate_checksum(saved_state);
+
+    // Wait for battle to actually start (G_No[1] == 2 means Game2_0 has run)
+    // before checksumming. Menu-to-battle transition leaves dozens of globals
+    // in flight for several frames; checksumming during that window = false desyncs.
+    static int battle_start_frame = -1;
+    enum { BATTLE_SETTLE_FRAMES = 10 };
+
+    if (battle_start_frame < 0 && G_No[1] == 2) {
+        battle_start_frame = frame;
+        // Menu-phase globals that battle logic never clears
+        Next_Demo = 0;
+        gather_state(dst);  // Re-gather with zeroed value
+        SDL_Log("[P%d] battle detected at frame %d, checksumming starts at frame %d",
+                local_port, frame, frame + BATTLE_SETTLE_FRAMES);
+    }
+
+    const bool checksumming_active =
+        battle_start_frame >= 0 && frame >= battle_start_frame + BATTLE_SETTLE_FRAMES;
+
+    // BACKUP the current (forward) state in this slot before overwriting it,
+    // so we can dump it if a desync is detected.
+    static State forward_backup;
+    bool has_forward_backup = false;
+    if (frame > -1) {
+        int idx = frame % STATE_BUFFER_MAX;
+        if (idx < 0) idx += STATE_BUFFER_MAX;
+        SDL_memcpy(&forward_backup, &state_buffer[idx], sizeof(State));
+        has_forward_backup = true;
+    }
+
+    note_state(dst, frame); // Backup current state to buffer
+
+    // Sanitize ONLY non-functional data in dst (safe for rollback restore):
+    // - Inactive effect slots: zero everything (be_flag == 0 means unused)
+    // - Padding arrays: wrd_free, et_free (never read by game logic)
+    // - WORK_Other_CONN unused tail entries (beyond num_of_conn)
+    // IMPORTANT: Do NOT zero pointer fields in dst — Gekko loads this state
+    // on rollback, and NULL pointers would crash the game immediately.
+    {
+        EffectState* es = &dst->es;
+        for (int i = 0; i < EFFECT_MAX; i++) {
+            WORK* w = (WORK*)es->frw[i];
+            if (w->be_flag == 0) {
+                // Slot unused — zero everything except linked-list pointers
+                // (before/behind/myself) which the effect system needs intact.
+                s16 before = w->before;
+                s16 behind = w->behind;
+                s16 myself = w->myself;
+                SDL_memset(es->frw[i], 0, sizeof(es->frw[i]));
+                w->before = before;
+                w->behind = behind;
+                w->myself = myself;
+            } else {
+                // Active slot: zero only padding (safe for rollback)
+                SDL_zeroa(w->wrd_free);
+
+                WORK_Other* wo = (WORK_Other*)w;
+                SDL_zeroa(wo->et_free);
+
+                if (is_work_other_conn(w->id)) {
+                    sanitize_work_other_conn(w);
+                }
+            }
+        }
+
+        note_state(dst, frame);
+    }
+
+    if (checksumming_active) {
+        // Pointer fields (PLW pointers, WORK pointers, WORK_Other.my_master)
+        // differ between processes because each has its own address space.
+        // Sanitize a COPY for checksumming — never modify dst.
+        static State checksum_scratch;
+        SDL_memcpy(&checksum_scratch, dst, sizeof(State));
+
+        // Zero PLW pointers in the copy
+        sanitize_plw_pointers(&checksum_scratch.gs.plw[0]);
+        sanitize_plw_pointers(&checksum_scratch.gs.plw[1]);
+
+        // Zero EffectState WORK/WORK_Other pointers in the copy
+        EffectState* es = &checksum_scratch.es;
+        for (int i = 0; i < EFFECT_MAX; i++) {
+            WORK* w = (WORK*)es->frw[i];
+            if (w->be_flag != 0) {
+                sanitize_work_pointers(w);
+                sanitize_work_rendering(w);
+                // WORK_Other variants all have my_master right after WORK
+                WORK_Other* wo = (WORK_Other*)w;
+                wo->my_master = NULL;
+            }
+        }
+
+        // Zero GameState pointer fields that differ due to ASLR
+        checksum_scratch.gs.ci_pointer = NULL;
+        for (int i = 0; i < SDL_arraysize(checksum_scratch.gs.task); i++) {
+            checksum_scratch.gs.task[i].func_adrs = NULL;
+        }
+
+        // Zero viewport/resolution-dependent background rendering state
+        // (bg_pos, bg_prm, BgMATRIX differ between peers due to window size)
+        SDL_zeroa(checksum_scratch.gs.bg_pos);
+        SDL_zeroa(checksum_scratch.gs.bg_prm);
+        SDL_zeroa(checksum_scratch.gs.BgMATRIX);
+
+        SectionedChecksum sc = calculate_sectioned_checksums(&checksum_scratch);
+        *event->data.save.checksum = sc.combined;
+
+        // Track forward fx hash per frame using a ringbuffer.
+        // When rollback replays a frame, compare & dump.
+        enum { FX_RING_SIZE = 32 };
+        static uint32_t fx_ring[FX_RING_SIZE] = {0};
+        static int max_forward_frame = -1;
+
+        if (frame > max_forward_frame) {
+            // Forward simulation: record the fx hash
+            fx_ring[frame % FX_RING_SIZE] = sc.effects;
+            max_forward_frame = frame;
+        } else {
+            // Rollback replay: compare with stored forward hash
+            uint32_t fwd = fx_ring[frame % FX_RING_SIZE];
+            bool matches = (sc.effects == fwd);
+            SDL_Log("[P%d F%d] ROLLBACK fx=%08X (fwd=%08X) %s",
+                    local_port, frame, sc.effects, fwd,
+                    matches ? "OK" : "DIVERGED!");
+            if (!matches) {
+                // Dump the ROLLBACK state for offline diff
+                char fname[100];
+                SDL_snprintf(fname, sizeof(fname), "states/rollback_%d_%d", local_port, frame);
+                dump_state(dst, fname);
+                // Also save the forward state from backup
+                if (has_forward_backup) {
+                    SDL_snprintf(fname, sizeof(fname), "states/forward_%d_%d", local_port, frame);
+                    dump_state(&forward_backup, fname);
+                }
+            }
+            // Update the ringbuffer with the rollback hash (GekkoNet uses this one)
+            fx_ring[frame % FX_RING_SIZE] = sc.effects;
+        }
+    }
 #endif
 }
 
@@ -453,14 +661,25 @@ static void process_session() {
             session_state = SESSION_RUNNING;
             break;
 
-        case DesyncDetected:
+        case DesyncDetected: {
             const int frame = event->data.desynced.frame;
-            printf("⚠️ desync detected at frame %d\n", frame);
+            printf("⚠️ desync detected at frame %d (local: 0x%08x, remote: 0x%08x)\n",
+                   frame, event->data.desynced.local_checksum, event->data.desynced.remote_checksum);
 
 #if defined(DEBUG)
+            // Log per-section checksums to help narrow down the diverging subsystem
+            const State* saved = &state_buffer[frame % STATE_BUFFER_MAX];
+            SectionedChecksum sc = calculate_sectioned_checksums(saved);
+            printf("  sections: plw0=0x%08x plw1=0x%08x bg=0x%08x tasks=0x%08x fx=0x%08x globals=0x%08x\n",
+                   sc.plw0, sc.plw1, sc.bg, sc.tasks, sc.effects, sc.globals);
             dump_saved_state(frame);
 #endif
+
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Netplay",
+                "Desync detected — the session will be terminated.", NULL);
+            session_state = SESSION_EXITING;
             break;
+        }
 
         case EmptySessionEvent:
         case SpectatorPaused:
