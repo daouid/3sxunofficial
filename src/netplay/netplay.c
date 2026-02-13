@@ -315,7 +315,7 @@ static void gather_state(State* dst) {
 }
 
 
-
+#if defined(DEBUG)
 // These effect IDs use the WORK_Other_CONN layout (variable-length conn[] tail).
 // Derived by auditing every effXX.c that casts to WORK_Other_CONN*.
 static bool is_work_other_conn(int id) {
@@ -419,6 +419,7 @@ static State* note_state(const State* state, int frame) {
     SDL_memcpy(dst, state, sizeof(State));
     return dst;
 }
+#endif
 
 static void save_state(GekkoGameEvent* event) {
     *event->data.save.state_len = sizeof(State);
