@@ -32,6 +32,10 @@ include_directories(
 file(GLOB_RECURSE GAME_SRC src/*.c)
 file(GLOB_RECURSE ZLIB_SRC zlib/*.c)
 
+# Vendored zlib has format-string mismatches exposed by -DDEBUG (Tracev macros).
+# Suppress -Wformat only for these files so they compile cleanly under -Werror.
+set_source_files_properties(${ZLIB_SRC} PROPERTIES COMPILE_OPTIONS "-Wno-format")
+
 add_executable(3sx MACOSX_BUNDLE
     ${GAME_SRC} ${ZLIB_SRC}
 )
