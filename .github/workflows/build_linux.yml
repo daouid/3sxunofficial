@@ -9,6 +9,9 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                build_type: [Release, Debug]
 
         steps:
           - name: Checkout repository
@@ -30,16 +33,16 @@ jobs:
                 ./build-deps.sh
             shell: bash
 
-          - name: Build for Linux
+          - name: Build for Linux (${{ matrix.build_type }})
             run: |
                 set -o pipefail
-                CC=clang CXX=clang++ cmake -B build -DCMAKE_BUILD_TYPE=Release
-                cmake --build build --parallel 2>&1 | tee build.log
+                CC=clang CXX=clang++ cmake -B build-${{ matrix.build_type }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+                cmake --build build-${{ matrix.build_type }} --parallel 2>&1 | tee build.log
             shell: bash
 
           - name: Upload build log
             if: always()
             uses: actions/upload-artifact@v4
             with:
-                name: build-log
+                name: build-log-linux-${{ matrix.build_type }}
                 path: build.log

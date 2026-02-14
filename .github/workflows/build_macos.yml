@@ -9,6 +9,9 @@ on:
 jobs:
     build:
         runs-on: macos-latest
+        strategy:
+            matrix:
+                build_type: [Release, Debug]
         env:
             TARGET_ARCH: universal
 
@@ -27,18 +30,18 @@ jobs:
           - name: Install dependencies
             run: sh build-deps.sh
 
-          - name: Build for macOS
+          - name: Build for macOS (${{ matrix.build_type }})
             run: |
                 set -o pipefail
-                cmake -B build \
-                  -DCMAKE_BUILD_TYPE=Release \
+                cmake -B build-${{ matrix.build_type }} \
+                  -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
                   -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
-                cmake --build build --parallel 2>&1 | tee build.log
+                cmake --build build-${{ matrix.build_type }} --parallel 2>&1 | tee build.log
             shell: bash
 
           - name: Upload build log
             if: always()
             uses: actions/upload-artifact@v4
             with:
-                name: build-log
+                name: build-log-macos-${{ matrix.build_type }}
                 path: build.log

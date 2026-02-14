@@ -8,8 +8,11 @@ on:
 
 jobs:
     build:
-        name: Build (Linux ARM64 via cross-compile)
+        name: Build (Linux ARM64 via cross-compile, ${{ matrix.build_type }})
         runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                build_type: [Release, Debug]
         container:
             image: ubuntu:25.04
 
@@ -118,24 +121,24 @@ jobs:
                     cmake --install .
                 fi
 
-          - name: Build for Linux ARM64
+          - name: Build for Linux ARM64 (${{ matrix.build_type }})
             run: |
                 set -o pipefail
-                cmake -B build-linux-arm64 \
-                    -DCMAKE_BUILD_TYPE=Release \
+                cmake -B build-linux-arm64-${{ matrix.build_type }} \
+                    -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
                     -DCMAKE_TOOLCHAIN_FILE=cmake/aarch64-linux-gnu.cmake \
                     -G Ninja
-                cmake --build build-linux-arm64 --parallel 2>&1 | tee build.log
+                cmake --build build-linux-arm64-${{ matrix.build_type }} --parallel 2>&1 | tee build.log
             shell: bash
 
           - name: Verify binary architecture
             run: |
-                file build-linux-arm64/3sx
-                file build-linux-arm64/3sx | grep -q "aarch64" && echo "✅ ARM64 binary confirmed" || (echo "❌ Not an ARM64 binary!" && exit 1)
+                file build-linux-arm64-${{ matrix.build_type }}/3sx
+                file build-linux-arm64-${{ matrix.build_type }}/3sx | grep -q "aarch64" && echo "✅ ARM64 binary confirmed" || (echo "❌ Not an ARM64 binary!" && exit 1)
 
           - name: Upload build log
             if: always()
             uses: actions/upload-artifact@v4
             with:
-                name: build-log-arm64-cross
+                name: build-log-arm64-cross-${{ matrix.build_type }}
                 path: build.log

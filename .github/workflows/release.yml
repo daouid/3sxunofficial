@@ -7,8 +7,11 @@ on:
 
 jobs:
   build-linux:
-    name: Build (Linux x86_64)
+    name: Build (Linux x86_64 ${{ matrix.build_type }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [Release, Debug]
     container:
       image: ubuntu:25.04
     steps:
@@ -40,28 +43,34 @@ jobs:
 
       - name: Configure and build with CMake
         run: |
-          CC=clang CXX=clang++ cmake -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --parallel
+          CC=clang CXX=clang++ cmake -B build-${{ matrix.build_type }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          cmake --build build-${{ matrix.build_type }} --parallel
 
       - name: Package artifact
         run: |
+          TYPE_LOWER=$(echo "${{ matrix.build_type }}" | tr 'A-Z' 'a-z')
+          SUFFIX=""
+          [ "$TYPE_LOWER" = "debug" ] && SUFFIX="-debug"
           mkdir -p artifacts pkg/bin pkg/lib
-          cp build/3sx pkg/bin/
+          cp build-${{ matrix.build_type }}/3sx pkg/bin/
           cp third_party/ffmpeg/build/lib/*.so* pkg/lib/
           cp third_party/sdl3/build/lib/*.so* pkg/lib/
           cp dist/3sx.sh pkg/
           chmod +x pkg/3sx.sh pkg/bin/3sx
-          cd pkg && zip -r ../artifacts/3sx-linux-x86_64.zip . && cd ..
+          cd pkg && zip -r ../artifacts/3sx-linux-x86_64${SUFFIX}.zip . && cd ..
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 3sx-linux-x86_64
-          path: artifacts/3sx-linux-x86_64.zip
+          name: 3sx-linux-x86_64-${{ matrix.build_type }}
+          path: artifacts/3sx-linux-x86_64*.zip
 
   build-linux-arm64:
-    name: Build (Linux ARM64 Cross-Compile)
+    name: Build (Linux ARM64 Cross-Compile ${{ matrix.build_type }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [Release, Debug]
     container:
       image: ubuntu:25.04
     steps:
@@ -171,31 +180,37 @@ jobs:
 
       - name: Build for Linux ARM64
         run: |
-          cmake -B build-linux-arm64 \
-              -DCMAKE_BUILD_TYPE=Release \
+          cmake -B build-linux-arm64-${{ matrix.build_type }} \
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
               -DCMAKE_TOOLCHAIN_FILE=cmake/aarch64-linux-gnu.cmake \
               -G Ninja
-          cmake --build build-linux-arm64 --parallel
+          cmake --build build-linux-arm64-${{ matrix.build_type }} --parallel
 
       - name: Package artifact
         run: |
+          TYPE_LOWER=$(echo "${{ matrix.build_type }}" | tr 'A-Z' 'a-z')
+          SUFFIX=""
+          [ "$TYPE_LOWER" = "debug" ] && SUFFIX="-debug"
           mkdir -p artifacts pkg/bin pkg/lib
-          cp build-linux-arm64/3sx pkg/bin/
+          cp build-linux-arm64-${{ matrix.build_type }}/3sx pkg/bin/
           cp third_party/ffmpeg/build/lib/*.so* pkg/lib/
           cp third_party/sdl3/build/lib/*.so* pkg/lib/
           cp dist/3sx.sh pkg/
           chmod +x pkg/3sx.sh pkg/bin/3sx
-          cd pkg && zip -r ../artifacts/3sx-linux-arm64.zip . && cd ..
+          cd pkg && zip -r ../artifacts/3sx-linux-arm64${SUFFIX}.zip . && cd ..
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 3sx-linux-arm64
-          path: artifacts/3sx-linux-arm64.zip
+          name: 3sx-linux-arm64-${{ matrix.build_type }}
+          path: artifacts/3sx-linux-arm64*.zip
 
   build-windows:
-    name: Build (Windows x86_64)
+    name: Build (Windows x86_64 ${{ matrix.build_type }})
     runs-on: windows-latest
+    strategy:
+      matrix:
+        build_type: [Release, Debug]
     defaults:
       run:
         shell: msys2 {0}
@@ -234,28 +249,34 @@ jobs:
       - name: Configure and build with CMake
         run: |
           set -o pipefail
-          CC=clang CXX=clang++ cmake -S . -B build \
+          CC=clang CXX=clang++ cmake -S . -B build-${{ matrix.build_type }} \
             -G "Ninja" \
-            -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --parallel
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          cmake --build build-${{ matrix.build_type }} --parallel
 
       - name: Package artifact
         run: |
+          TYPE_LOWER=$(echo "${{ matrix.build_type }}" | tr 'A-Z' 'a-z')
+          SUFFIX=""
+          [ "$TYPE_LOWER" = "debug" ] && SUFFIX="-debug"
           mkdir -p artifacts
           cp /mingw64/bin/libwinpthread-1.dll .
           cp /mingw64/bin/libstdc++-6.dll .
           cp /mingw64/bin/libgcc_s_seh-1.dll .
-          zip -j artifacts/3sx-windows.zip build/3sx.exe libwinpthread-1.dll libstdc++-6.dll libgcc_s_seh-1.dll third_party/ffmpeg/build/bin/*.dll third_party/sdl3/build/bin/*.dll
+          zip -j artifacts/3sx-windows${SUFFIX}.zip build-${{ matrix.build_type }}/3sx.exe libwinpthread-1.dll libstdc++-6.dll libgcc_s_seh-1.dll third_party/ffmpeg/build/bin/*.dll third_party/sdl3/build/bin/*.dll
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 3sx-windows
-          path: artifacts/3sx-windows.zip
+          name: 3sx-windows-${{ matrix.build_type }}
+          path: artifacts/3sx-windows*.zip
 
   build-macos:
-    name: Build (macOS Universal)
+    name: Build (macOS Universal ${{ matrix.build_type }})
     runs-on: macos-latest
+    strategy:
+      matrix:
+        build_type: [Release, Debug]
     env:
       TARGET_ARCH: universal
     steps:
@@ -281,22 +302,25 @@ jobs:
       - name: Configure and build with CMake
         run: |
           set -o pipefail
-          cmake -B build \
-            -DCMAKE_BUILD_TYPE=Release \
+          cmake -B build-${{ matrix.build_type }} \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
-          cmake --build build --parallel
+          cmake --build build-${{ matrix.build_type }} --parallel
 
       - name: Package artifact
         run: |
+          TYPE_LOWER=$(echo "${{ matrix.build_type }}" | tr 'A-Z' 'a-z')
+          SUFFIX=""
+          [ "$TYPE_LOWER" = "debug" ] && SUFFIX="-debug"
           mkdir -p artifacts
-          cd build
-          zip -r ../artifacts/3sx-macos-universal.zip 3sx.app
+          cd build-${{ matrix.build_type }}
+          zip -r ../artifacts/3sx-macos-universal${SUFFIX}.zip 3sx.app
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 3sx-macos-universal
-          path: artifacts/3sx-macos-universal.zip
+          name: 3sx-macos-universal-${{ matrix.build_type }}
+          path: artifacts/3sx-macos-universal*.zip
 
   build-flatpak:
     name: Build Flatpak
@@ -357,7 +381,7 @@ jobs:
 
             **Commit:** `${{ github.sha }}`
 
-            ### Downloads
+            ### Downloads (Release)
             | Platform | Architecture | File |
             |----------|-------------|------|
             | Linux | x86_64 | `3sx-linux-x86_64.zip` |
@@ -365,6 +389,14 @@ jobs:
             | Windows | x86_64 | `3sx-windows.zip` |
             | macOS | Universal (arm64 + x86_64) | `3sx-macos-universal.zip` |
             | Linux (Flatpak) | x86_64 | `3sx.flatpak` |
+
+            ### Downloads (Debug)
+            | Platform | Architecture | File |
+            |----------|-------------|------|
+            | Linux | x86_64 | `3sx-linux-x86_64-debug.zip` |
+            | Linux | ARM64 | `3sx-linux-arm64-debug.zip` |
+            | Windows | x86_64 | `3sx-windows-debug.zip` |
+            | macOS | Universal (arm64 + x86_64) | `3sx-macos-universal-debug.zip` |
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
 
