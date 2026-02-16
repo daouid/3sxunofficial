@@ -5,6 +5,7 @@
 
 #include "sf33rd/Source/Game/screen/entry.h"
 #include "common.h"
+#include "main.h"
 #include "sf33rd/AcrSDK/common/pad.h"
 #include "sf33rd/Source/Game/debug/Debug.h"
 #include "sf33rd/Source/Game/effect/effa2.h"
@@ -13,7 +14,6 @@
 #include "sf33rd/Source/Game/engine/plcnt.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
 #include "sf33rd/Source/Game/io/gd3rd.h"
-#include "sf33rd/Source/Game/main.h"
 #include "sf33rd/Source/Game/screen/n_input.h"
 #include "sf33rd/Source/Game/screen/ranking.h"
 #include "sf33rd/Source/Game/sound/se.h"

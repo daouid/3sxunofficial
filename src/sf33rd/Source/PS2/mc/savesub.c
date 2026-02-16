@@ -1,19 +1,19 @@
 #include "sf33rd/Source/PS2/mc/savesub.h"
 #include "common.h"
 #include "sf33rd/AcrSDK/ps2/foundaps2.h"
-#include "sf33rd/Source/Game/system/ramcnt.h"
 #include "sf33rd/Source/Game/engine/pls02.h"
+#include "sf33rd/Source/Game/system/ramcnt.h"
 
 #if !defined(TARGET_PS2)
 #include "sf33rd/Source/Game/system/sys_sub.h"
 #include "sf33rd/Source/Game/system/sys_sub2.h"
 #endif
 
-#include "sf33rd/Source/Game/system/work_sys.h"
+#include "main.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
-#include "sf33rd/Source/Game/main.h"
-#include "sf33rd/Source/Game/ui/sc_sub.h"
 #include "sf33rd/Source/Game/sound/sound3rd.h"
+#include "sf33rd/Source/Game/system/work_sys.h"
+#include "sf33rd/Source/Game/ui/sc_sub.h"
 #include "sf33rd/Source/PS2/mc/knjsub.h"
 #include "sf33rd/Source/PS2/mc/mcsub.h"
 #include "sf33rd/Source/PS2/mc/msgsub.h"

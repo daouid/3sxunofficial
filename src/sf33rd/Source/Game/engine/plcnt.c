@@ -5,6 +5,7 @@
 
 #include "sf33rd/Source/Game/engine/plcnt.h"
 #include "common.h"
+#include "main.h"
 #include "sf33rd/Source/Game/animation/win_pl.h"
 #include "sf33rd/Source/Game/debug/Debug.h"
 #include "sf33rd/Source/Game/effect/eff00.h"
@@ -32,7 +33,6 @@
 #include "sf33rd/Source/Game/engine/slowf.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
 #include "sf33rd/Source/Game/io/pulpul.h"
-#include "sf33rd/Source/Game/main.h"
 #include "sf33rd/Source/Game/rendering/aboutspr.h"
 #include "sf33rd/Source/Game/rendering/color3rd.h"
 #include "sf33rd/Source/Game/rendering/texcash.h"

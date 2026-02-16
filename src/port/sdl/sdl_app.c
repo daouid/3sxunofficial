@@ -7,7 +7,6 @@
 #include "port/sdl/sdl_pad.h"
 #include "port/sound/adx.h"
 #include "sf33rd/AcrSDK/ps2/foundaps2.h"
-#include "sf33rd/Source/Game/main.h"
 
 #include <SDL3/SDL.h>
 

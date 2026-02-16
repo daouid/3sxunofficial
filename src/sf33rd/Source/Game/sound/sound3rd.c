@@ -5,6 +5,7 @@
 
 #include "sf33rd/Source/Game/sound/sound3rd.h"
 #include "common.h"
+#include "main.h"
 #include "port/sound/adx.h"
 #include "sf33rd/AcrSDK/MiddleWare/PS2/CapSndEng/cse.h"
 #include "sf33rd/AcrSDK/MiddleWare/PS2/CapSndEng/emlMemMap.h"
@@ -16,7 +17,6 @@
 #include "sf33rd/Source/Game/effect/effect.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
 #include "sf33rd/Source/Game/io/gd3rd.h"
-#include "sf33rd/Source/Game/main.h"
 #include "sf33rd/Source/Game/rendering/color3rd.h"
 #include "sf33rd/Source/Game/sound/se.h"
 #include "sf33rd/Source/Game/sound/se_data.h"

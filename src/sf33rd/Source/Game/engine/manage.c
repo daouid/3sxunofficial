@@ -5,6 +5,7 @@
 
 #include "sf33rd/Source/Game/engine/manage.h"
 #include "common.h"
+#include "main.h"
 #include "sf33rd/Source/Game/animation/appear.h"
 #include "sf33rd/Source/Game/debug/Debug.h"
 #include "sf33rd/Source/Game/effect/eff08.h"
@@ -26,7 +27,6 @@
 #include "sf33rd/Source/Game/engine/plcnt.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
 #include "sf33rd/Source/Game/io/pulpul.h"
-#include "sf33rd/Source/Game/main.h"
 #include "sf33rd/Source/Game/menu/menu.h"
 #include "sf33rd/Source/Game/rendering/aboutspr.h"
 #include "sf33rd/Source/Game/sound/se.h"

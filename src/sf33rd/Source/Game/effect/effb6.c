@@ -5,9 +5,9 @@
 
 #include "sf33rd/Source/Game/effect/effb6.h"
 #include "common.h"
-#include "sf33rd/Source/Game/Message3rd/C_USA/msgTable_usa.h"
 #include "sf33rd/Source/Game/debug/OTESTDAT.h"
 #include "sf33rd/Source/Game/effect/effect.h"
+#include "sf33rd/Source/Game/message/en/msgtable_en.h"
 #include "sf33rd/Source/Game/rendering/aboutspr.h"
 
 #include <string.h>

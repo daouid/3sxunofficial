@@ -1,12 +1,12 @@
 #include "sf33rd/Source/Game/init3rd.h"
-#include "sf33rd/Source/Game/Game.h"
+#include "main.h"
 #include "sf33rd/Source/Game/debug/Debug.h"
 #include "sf33rd/Source/Game/demo/demo00.h"
 #include "sf33rd/Source/Game/effect/effect.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
+#include "sf33rd/Source/Game/game.h"
 #include "sf33rd/Source/Game/io/gd3rd.h"
 #include "sf33rd/Source/Game/io/pulpul.h"
-#include "sf33rd/Source/Game/main.h"
 #include "sf33rd/Source/Game/menu/dir_data.h"
 #include "sf33rd/Source/Game/rendering/aboutspr.h"
 #include "sf33rd/Source/Game/rendering/texcash.h"
@@ -23,9 +23,7 @@
 #include "sf33rd/Source/PS2/mc/savesub.h"
 #include "structs.h"
 
-#if !defined(TARGET_PS2)
 #include <string.h>
-#endif
 
 s8 Test_Cursor;
 
@@ -101,13 +99,9 @@ void Init_Task_1st(struct _TASK* task_ptr) {
         system_dir[ix] = Dir_Default_Data;
         permission_player[ix] = Permission_PL_Data;
 
-#if defined(TARGET_PS2)
-        save_w[ix].extra_option.contents = save_w[0].extra_option.contents;
-#else
         memcpy(&save_w[ix].extra_option.contents,
                &save_w[0].extra_option.contents,
                sizeof(save_w[ix].extra_option.contents));
-#endif
 
         Direction_Working[ix] = 0;
         Vital_Handicap[ix][0] = 7;

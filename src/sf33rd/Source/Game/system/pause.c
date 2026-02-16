@@ -5,12 +5,12 @@
 
 #include "sf33rd/Source/Game/system/pause.h"
 #include "common.h"
+#include "main.h"
 #include "sf33rd/AcrSDK/common/pad.h"
 #include "sf33rd/Source/Game/effect/eff66.h"
 #include "sf33rd/Source/Game/engine/plcnt.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
 #include "sf33rd/Source/Game/io/pulpul.h"
-#include "sf33rd/Source/Game/main.h"
 #include "sf33rd/Source/Game/menu/menu.h"
 #include "sf33rd/Source/Game/sound/sound3rd.h"
 #include "sf33rd/Source/Game/system/reset.h"

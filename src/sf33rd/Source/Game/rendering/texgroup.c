@@ -5,11 +5,11 @@
 
 #include "sf33rd/Source/Game/rendering/texgroup.h"
 #include "common.h"
+#include "main.h"
 #include "sf33rd/AcrSDK/ps2/foundaps2.h"
 #include "sf33rd/Source/Game/engine/charid.h"
 #include "sf33rd/Source/Game/engine/plcnt.h"
 #include "sf33rd/Source/Game/io/gd3rd.h"
-#include "sf33rd/Source/Game/main.h"
 #include "sf33rd/Source/Game/rendering/chren3rd.h"
 #include "sf33rd/Source/Game/rendering/texcash.h"
 #include "sf33rd/Source/Game/system/ramcnt.h"
