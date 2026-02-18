@@ -1,6 +1,7 @@
 #include "port/sdl/sdl_app.h"
 #include "common.h"
 #include "port/config.h"
+#include "port/sdl/netstats_renderer.h"
 #include "port/sdl/sdl_debug_text.h"
 #include "port/sdl/sdl_game_renderer.h"
 #include "port/sdl/sdl_message_renderer.h"
@@ -24,8 +25,7 @@ static const char* app_name = "Street Fighter III: 3rd Strike";
 static const float display_target_ratio = 4.0 / 3.0;
 static const int window_min_width = 384;
 static const int window_min_height = (int)(window_min_width / display_target_ratio);
-static const double target_fps = 59.59949;
-static const Uint64 target_frame_time_ns = 1000000000.0 / target_fps;
+static const Uint64 target_frame_time_ns = 1000000000.0 / TARGET_FPS;
 
 SDL_Window* window = NULL;
 static SDL_Renderer* renderer = NULL;
@@ -136,14 +136,11 @@ int SDLApp_Init() {
 
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    // Initialize message renderer
+    // Initialize rendering subsystems
     SDLMessageRenderer_Initialize(renderer);
-
-    // Initialize game renderer
     SDLGameRenderer_Init(renderer);
 
 #if defined(DEBUG)
-    // Initialize debug text renderer
     SDLDebugText_Initialize(renderer);
 #endif
 
@@ -348,6 +345,9 @@ void SDLApp_EndFrame() {
 
     // Render
 
+    // This should come before SDLGameRenderer_RenderFrame,
+    // because NetstatsRenderer uses the existing SFIII rendering pipeline
+    NetstatsRenderer_Render();
     SDLGameRenderer_RenderFrame();
 
     if (should_save_screenshot) {
@@ -378,12 +378,12 @@ void SDLApp_EndFrame() {
     SDLDebugText_Render();
 
     // Render metrics
-    int window_width;
-    SDL_GetRenderOutputSize(renderer, &window_width, NULL);
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-    SDL_SetRenderScale(renderer, 2, 2);
-    SDL_RenderDebugTextFormat(renderer, (window_width / 2) - 88, 2, "FPS: %.3f", fps);
-    SDL_SetRenderScale(renderer, 1, 1);
+    // int window_width;
+    // SDL_GetRenderOutputSize(renderer, &window_width, NULL);
+    // SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+    // SDL_SetRenderScale(renderer, 2, 2);
+    // SDL_RenderDebugTextFormat(renderer, (window_width / 2) - 88, 2, "FPS: %.3f", fps);
+    // SDL_SetRenderScale(renderer, 1, 1);
 #endif
 
     SDL_RenderPresent(renderer);
