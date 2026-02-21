@@ -162,18 +162,23 @@ jobs:
           set -euo pipefail
           SHORT_SHA="${FULL_SHA:0:7}"
 
+          touch notes.md
+          echo "Automatic release for commit ${FULL_SHA}" >> notes.md
+          echo >> notes.md
+          echo "⚠️ **Disclaimer** ⚠️: This is a __pre-release__ build. Expect bugs and instability." >> notes.md
+
           if gh release view "${TAG_NAME}" >/dev/null 2>&1; then
-            gh release edit "${TAG_NAME}" --title "${SHORT_SHA}" --prerelease
+            gh release edit "${TAG_NAME}" \
+              --title "${SHORT_SHA}" \
+              --prerelease \
+              --notes-file notes.md
+
             for asset in $(gh release view "${TAG_NAME}" --json assets --jq '.assets[].name'); do
               gh release delete-asset "${TAG_NAME}" "${asset}" --yes
             done
+
             gh release upload "${TAG_NAME}" release-assets/* --clobber
           else
-            touch notes.md
-            echo "Automatic release for commit ${FULL_SHA}" >> notes.md
-            echo >> notes.md
-            echo "⚠️ **Disclaimer** ⚠️: This is a __pre-release__ build. Expect bugs and instability." >> notes.md
-
             gh release create "${TAG_NAME}" release-assets/* \
               --title "${SHORT_SHA}" \
               --prerelease \
